@@ -20,7 +20,11 @@ def add_area(id: int, name: str):
     psspy.area_data(id, _i, [_f, _f], name)
 
 
-def add_bus(bus: pd.Series, country_id: int, has_generation_units: bool, config: dict):
+def add_region(id: int, LnNamn: str):
+    psspy.zone_data(id, LnNamn)
+
+
+def add_bus(bus: pd.Series, country_id: int, LnNamn_id: int, has_generation_units: bool, config: dict):
     if bus.carrier == 'DC' or bus.v_nom is None:
         return
 
@@ -35,7 +39,7 @@ def add_bus(bus: pd.Series, country_id: int, has_generation_units: bool, config:
         psspy.bus_data_4(
             int(bus.name),
             0,
-            [code, country_id, _i, _i],
+            [code, country_id, LnNamn_id, _i],
             [bus.v_nom, _f, _f, _f, _f, _f, _f],
             bus.symbol[0:12],
         )
@@ -44,6 +48,7 @@ def add_bus(bus: pd.Series, country_id: int, has_generation_units: bool, config:
         raise e
 
 
+#here you can control the q settings of the generators
 def add_machine(machine: pd.Series, bus: pd.Series, id: int, in_service: bool, config: dict) -> bool:
     # TODO r_source, x_source, r_tran, x_tran
     # TODO machines at DC-buses
@@ -55,14 +60,16 @@ def add_machine(machine: pd.Series, bus: pd.Series, id: int, in_service: bool, c
     if p <= 0:
         return False
 
-    pf = 0.9  # Check value, maybe change per generation type ?
+    #pf = 0.94
+    pf = 0.8
     angle = math.acos(pf)
-    m_base = machine.p_nom / pf  # do not take into account setpoint, only actual capacity [MW]
+    m_base = machine.p_nom / pf
 
     p_min = 0
     p_max = machine.p_nom
 
-    q_max = m_base * math.sin(angle)
+    #q_max = m_base * math.sin(angle)   #uncoment here if you want to set the q limit from the power factor
+    q_max = 9999
     q_min = -q_max
 
     try:
@@ -114,15 +121,23 @@ def add_load_psse(bus_id: int, id: str, p_set: float, q_set: float, description:
     )
 
 
-def add_shunt_impedance(shunt_impedance: pd.Series, bus: pd.Series, id: int, in_service: bool):
-    # TODO find data
-    # TODO implement
-    pass
+def add_shunt_impedance(shunt_impedance: pd.Series, id: int):
+
+    int_shunt_bus = int(shunt_impedance.bus)
+    int_bl1_steps = int(shunt_impedance.bl1_steps)
+    int_bl2_steps = int(shunt_impedance.bl2_steps)
+    float_bl1_mva = float(shunt_impedance.bl1_mva)
+    float_bl2_mva = float(shunt_impedance.bl2_mva)
+
+    psspy.switched_shunt_data_5(
+        int_shunt_bus, str(id),
+        [int_bl1_steps, int_bl2_steps, _i, _i, _i, _i, _i, _i, 1, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i],
+        [float_bl1_mva, float_bl2_mva, _f, _f, _f, _f, _f, _f, shunt_impedance.v_high, shunt_impedance.v_low, _f, _f], _s
+    )
 
 
 def add_branch(line: pd.Series, id: int):
-    # TODO long transmission line model, how does that work in PSS/E?
-    # TODO do the PU calculation here instead of in pypsa-eur
+
     try:
         psspy.branch_data_3(
             int(line.bus0),
@@ -130,7 +145,7 @@ def add_branch(line: pd.Series, id: int):
             str(id),
             [_i, _i, _i, _i, _i, _i],
             [line.r_pu, line.x_pu, line.b_pu, _f, _f, _f, _f, line.length, _f, _f, _f, _f],
-            [line.s_nom, _f, _f, _f, _f, _f, _f, _f, _f, _f, _f, _f],
+            [line.s_nom, line.s_nom_2, _f, _f, _f, _f, _f, _f, _f, _f, _f, _f],
             "",
         )
     except Exception as e:
@@ -138,19 +153,41 @@ def add_branch(line: pd.Series, id: int):
         raise e
 
 
+def remove_branch_and_buses(remove_lines, inactive_lines, remove_buses):
+
+    for index, row in remove_lines.iterrows():
+        psspy.purgbrn(int(row['bus0']), int(row['bus1']), str(row['id']))
+
+    for index, row in inactive_lines.iterrows():
+        psspy.branch_chng_3(
+            int(row['bus0']),
+            int(row['bus1']),
+            str(row['id']),
+            [0, _i, _i, _i, _i, _i],
+            [_f, _f, _f, _f, _f, _f, _f, _f, _f, _f, _f, _f],
+            [_f, _f, _f, _f, _f, _f, _f, _f, _f, _f, _f, _f], _s)
+
+    for index, row in remove_buses.iterrows():
+        psspy.bsysinit(1)
+        psspy.bsyso(1, int(row['bus']))
+        psspy.extr(1, 0, [0, 0])
+
+
+#here you can change the x_pu of the transfomer by editing the second value in the second array. Currently 0.12
 def add_transformer(transformer: pd.Series, id: int):
     try:
         psspy.two_winding_data_6(
             int(transformer.bus0),
             int(transformer.bus1),
             str(id),
-            [_i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i],
-            [transformer.r_pu, transformer.x_pu, _f, _f, _f, _f, _f, _f, _f, _f, _f, transformer.g_pu, transformer.b_pu, _f, _f, _f, _f,
+            [_i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, _i, 2, _i],
+            [transformer.r_pu, 0.12, 400.0, _f, _f, _f, _f, _f, _f, _f, _f, transformer.g_pu, transformer.b_pu, _f, _f, _f, _f,
              _f, _f, _f],
             [transformer.s_nom, _f, _f, _f, _f, _f, _f, _f, _f, _f, _f, _f],
             _s,
             _s,
         )
+
     except Exception as e:
         logger.info(transformer)
         raise e
@@ -245,6 +282,7 @@ if __name__ == "__main__":
     storage_units = pd.read_sql("SELECT * FROM storage_units WHERE p_set > 0", con=c).set_index('StorageUnit')
     loads = pd.read_sql("SELECT * FROM loads WHERE p_set > 0", con=c).set_index('Load')
     shunt_impedances = pd.read_sql("SELECT * FROM shunt_impedances", con=c).set_index('ShuntImpedance')
+    print(shunt_impedances)
     external_links = pd.read_sql("SELECT * FROM external_links", con=c).set_index('ExternalLink')
 
     lines = pd.read_sql("SELECT * FROM lines", con=c).set_index('Line')
@@ -260,6 +298,16 @@ if __name__ == "__main__":
     ], axis=1)\
         .sort_values(["bidding_zone_in_config", "bidding_zone"], ascending=[False, True])\
         .reset_index()['bidding_zone']
+
+    # get a sorted list of regions for the area id:  in nordics first, sort the rest alphabetically
+    all_regions = pd.Series(buses["LnNamn"].unique())
+    region_in_config = all_regions.map(lambda country: country in snakemake.config["regions"])
+    all_regions = pd.concat([
+        all_regions.rename('LnNamn'),
+        region_in_config.rename('region_in_config')
+    ], axis=1) \
+        .sort_values(["region_in_config", "LnNamn"], ascending=[False, True]) \
+        .reset_index()['LnNamn']
 
     # find all buses with external link (only for visualization, 'outside' buses will be disabled)
     buses_with_external_links = set()
@@ -285,7 +333,13 @@ if __name__ == "__main__":
 
         has_generators = len(generators[generators["bus"] == bus.name].index) > 0 or len(storage_units[storage_units["bus"] == bus.name].index) > 0
 
-        add_bus(bus, all_bidding_zones[all_bidding_zones == bus.bidding_zone].index[0] + 1, has_generators, snakemake.config)
+        try:
+            region_index = all_regions[all_regions == bus.LnNamn].index[0] + 1
+        except IndexError:
+            # region name not found, set region index to 0 or handle the error
+            region_index = 0
+        bidding_zone_index = all_bidding_zones[all_bidding_zones == bus.bidding_zone].index[0] + 1
+        add_bus(bus, bidding_zone_index, region_index, has_generators, snakemake.config)
         buses_in_psse.add(bus.name)
 
         index = 1
@@ -304,7 +358,7 @@ if __name__ == "__main__":
 
         index = 1
         for _, shunt_impedance in shunt_impedances_bus.iterrows():
-            add_shunt_impedance(shunt_impedance, bus, index, status)
+            add_shunt_impedance(shunt_impedance, index)
             index += 1
 
         index = 1
@@ -326,6 +380,12 @@ if __name__ == "__main__":
         add_branch(line, index)
         indexes[line.bus0].append(index)
         indexes[line.bus1].append(index)
+
+    logger.info('Removing lines and buses')
+    remove_lines = pd.read_excel(snakemake.input.remove_lines)
+    inactive_lines = pd.read_excel(snakemake.input.inactive_lines)
+    remove_buses = pd.read_excel(snakemake.input.remove_buses)
+    remove_branch_and_buses(remove_lines, inactive_lines, remove_buses)
 
     logger.info('Adding transformers')
     # indexes are meant to find a 'free' id (for both buses) when connecting 2 buses
@@ -357,6 +417,10 @@ if __name__ == "__main__":
     for i, country in enumerate(all_bidding_zones, start=1):
         add_area(i, country)
 
+    logger.info('Adding regions')
+    for i, country in enumerate(all_regions, start=1):
+        add_region(i, country)
+
     logger.info('Disabling excluded buses')
     for _, bus in buses.iterrows():
         if not bus_included(bus, snakemake.config) and bus.name in buses_in_psse:
@@ -365,6 +429,7 @@ if __name__ == "__main__":
     # run load flow
     logger.info('Solving using Newton-Raphson (flat start)')
     solve_newton_raphson()
+    #psspy.fnsl([0, 0, 0, 1, 1, 1, 99, 0])
 
     # save case and diagram to file
     logger.info('Saving ' + snakemake.output.sav)

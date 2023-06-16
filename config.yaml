@@ -1,6 +1,6 @@
 run:
   input: "2020"
-  name: "2020-high" # use this to keep track of runs with different settings
+  name: "hl_hw" # use this to keep track of runs with different settings
 
 logging:
   level: INFO
@@ -15,34 +15,107 @@ bidding_zones_in_country:
   'NO': ['NO_1', 'NO_2', 'NO_3', 'NO_4', 'NO_5']
   'SE': ['SE_1', 'SE_2', 'SE_3', 'SE_4']
 
+regions: ['Not in any region', 'Agder', 'Gävleborgs', 'Skåne', 'Gotlands', 'Västra Götalands', 'Hallands', 'Östergötlands',
+          'Jönköpings', 'Kalmar', 'Kronobergs', 'Blekinge', 'Rogaland','Södra Savolax', 'Satakunta', 'Kymmenedalen', 'Egentliga Finland',
+          'Egentliga Tavastland', 'Birkaland', 'Nyland', 'Södra Karelen', 'Uppsala', 'Södermanlands', 'Stockholms', 'Viken','Värmlands',
+          'Dalarnas', 'Örebro', 'Västmanlands', 'Vestland', 'Vestfold og Telemark', 'Innlandet', 'Oslo', 'Mellersta Österbotten',
+          'Norra Österbotten', 'Södra Österbotten', 'Mellersta Finland','Kajanaland', 'Norra Savolax', 'Västerbottens', 'Västernorrlands',
+          'Österbotten', 'Trøndelag', 'Jämtlands', 'Møre og Romsdal', 'Norrbottens', 'Lappland', 'Nordland', 'Troms og Finnmark']
+
+regions_in_country:
+  'FI': ['Lappland', 'Norra Österbotten', 'Kajanaland', 'Norra Savolax', 'Södra Savolax', 'Södra Karelen', 'Mellersta Finland',
+         'Södra Österbotten','Österbotten', 'Mellersta Österbotten', 'Birkaland', 'Satakunta', 'Egentliga Tavastland', 'Kymmenedalen',
+         'Nyland', 'Egentliga Finland']
+  'SE': ['Blekinge', 'Dalarnas', 'Gotlands', 'Gävleborgs', 'Hallands', 'Jämtlands', 'Jönköpings', 'Kalmar', 'Kronobergs', 'Norrbottens',
+         'Skåne', 'Stockholms', 'Södermanlands', 'Uppsala','Värmlands', 'Västerbottens', 'Västernorrlands', 'Västmanlands', 'Västra Götalands',
+         'Örebro', 'Östergötlands']
+  'NO': ['Oslo', 'Rogaland', 'Møre og Romsdal', 'Nordland', 'Viken', 'Innlandet', 'Vestfold og Telemark', 'Agder', 'Vestland', 'Trøndelag',
+         'Troms og Finnmark']
+
 M_base: 100 # power base for p.u. calculations
 
 generator_p_min: 5  # MW
 
 # This is an estimate that should be improved iteratively
-losses:  # From PSS/E
-  DK_2: 3.1292
-  FI: 199.8202
-  NO_1: 130.3866
-  NO_2: 290.9430
-  NO_3: 39.6732
-  NO_4: 41.1647
-  NO_5: 50.8565
-  SE_1: 47.5572
-  SE_2: 476.5150
-  SE_3: 539.9645
-  SE_4: 105.2305
+#hw_hl
+#losses:  # From PSS/E
+#  DK_2: 9
+#  FI: 220
+#  NO_1: 78
+#  NO_2: 47
+#  NO_3: 23
+#  NO_4: 19
+#  NO_5: 18
+#  SE_1: 18
+#  SE_2: 225
+#  SE_3: 266
+#  SE_4: 131
+
+##ll_hw
+losses:
+  DK_2: 2
+  FI: 52
+  NO_1: 31
+  NO_2: 51
+  NO_3: 27
+  NO_4: 20
+  NO_5: 34
+  SE_1: 6
+  SE_2: 87
+  SE_3: 128
+  SE_4: 66
+
+#ll_lw
+#losses:
+#  DK_2: 3
+#  FI: 158
+#  NO_1: 60
+#  NO_2: 51
+#  NO_3: 17
+#  NO_4: 21
+#  NO_5: 30
+#  SE_1: 33
+#  SE_2: 259
+#  SE_3: 228
+#  SE_4: 120
+
+#hl_lw
+#losses:
+#   DK_2: 4
+#   FI: 151
+#   NO_1: 152
+#   NO_2: 77
+#   NO_3: 48
+#   NO_4: 59
+#   NO_5: 54
+#   SE_1: 34
+#   SE_2: 557
+#   SE_3: 475
+#   SE_4: 126
 
 
 # Watch out with availability of data in ENTSO-E
 # e.g. Between 14.10.2019 07:00 and 03.03.2020 10:00, there is no data on cross-flow NO1-NO2
-snapshot: '2020-03-04 18:00:00'  # UTC -> 19:00 in our timezone
+#2020-high
+#snapshot: '2020-03-04 18:00:00'
+
+#ll_hw
+snapshot: '2020-09-17 00:00'
+
+#ll_lw
+#snapshot: '2020-08-01 05:00'
+
+#hl_hw
+#snapshot: '2020-02-21 18:00'
+
+#hl_lw
+#snapshot: '2020-02-27 18:00'
 
 build_network:
-  scheduled_voltage: 1.025  # pu
+  scheduled_voltage: 1.0  # pu
   exclude_under_construction: False
   supress_psse_output: True
-  slack_buses: ["6591"]  # centralized nuclear plant
+  slack_buses: ["6585"]  # centralized nuclear plant
 #  slack_buses: ["7003"]  # biggest hydro plant in SE_1
 
 database:
@@ -84,6 +157,12 @@ database:
     - bus
     - g_pu
     - b_pu
+    - bl1_steps
+    - bl1_mva
+    - bl2_steps
+    - bl2_mva
+    - v_high
+    - v_low
   lines:
     - bus0
     - bus1
@@ -92,6 +171,7 @@ database:
     - under_construction
     - s_max_pu
     - s_nom
+    - s_nom_2
     - x_pu
     - r_pu
     - g_pu
