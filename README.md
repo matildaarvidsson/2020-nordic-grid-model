@@ -91,7 +91,7 @@ It is assumed that `git` and `conda` are already installed, as shown in the PyPS
 As this is a private GitHub repository, request access to the GitHub first.
 ``` bash
 cd /some/path
-git clone https://github.com/niekbr/dnv-nordics-model.git
+git clone https://github.com/matildaarvidsson/2020-nordic-grid-model.git
 ```
 
 ### Install Python Dependencies
