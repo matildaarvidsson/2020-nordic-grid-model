@@ -68,7 +68,7 @@ More details on the configuration options are in the [PyPSA-Eur documentation](h
 Before first use, create a `config.yaml` by copying the DNV config example.
 
 ``` bash
-cp config.dnv.yaml config.yaml
+copy config.dnv.yaml config.yaml
 ```
 
 ## Usage
