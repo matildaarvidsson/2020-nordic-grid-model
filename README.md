@@ -88,7 +88,6 @@ It is assumed that `git` and `conda` are already installed, as shown in the PyPS
 > **Note**
 > Instead of cloning the GitHub repository, it is also possible to open the model in the 'Grid models based on open sources - Documents' Team.
 
-As this is a private GitHub repository, request access to the GitHub first.
 ``` bash
 cd /some/path
 git clone https://github.com/matildaarvidsson/2020-nordic-grid-model.git
