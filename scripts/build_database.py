@@ -730,4 +730,4 @@ if __name__ == "__main__":
 
     # here you need to make sure that the database/INSERT_OWN/nordics is matching your case name
     logger.info('Adding region info')
-    merge_buses("database/hl_hw/nordics.sqlite", 'example.sqlite', "database/hl_hw/nordics.sqlite")
+    merge_buses("database/ll_hw/nordics.sqlite", 'example.sqlite', "database/ll_hw/nordics.sqlite")

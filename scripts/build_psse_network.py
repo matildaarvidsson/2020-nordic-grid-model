@@ -50,8 +50,6 @@ def add_bus(bus: pd.Series, country_id: int, LnNamn_id: int, has_generation_unit
 
 #here you can control the q settings of the generators
 def add_machine(machine: pd.Series, bus: pd.Series, id: int, in_service: bool, config: dict) -> bool:
-    # TODO r_source, x_source, r_tran, x_tran
-    # TODO machines at DC-buses
     if bus.carrier == 'DC':
         return False
 
@@ -95,7 +93,6 @@ def add_machine(machine: pd.Series, bus: pd.Series, id: int, in_service: bool, c
 
 
 def add_load(load: pd.Series, bus: pd.Series, id: int, in_service: bool):
-    # TODO: validate data
     try:
         add_load_psse(int(load.bus), str(id), load.p_set, load.q_set, in_service=in_service, scalable=True)
     except Exception as e:
@@ -206,13 +203,13 @@ def add_link(link: pd.Series, bus0: pd.Series, bus1: pd.Series, config: dict):
                 [_f, _f, _f, _f, _f]
             )
             psspy.vsc_dc_converter_data_3(
-                str(link.name),  # TODO
+                str(link.name),
                 1,
                 [int(link.bus0), 2, _i, _i, _i],
                 [float(link.p_set), config["build_network"]["scheduled_voltage"], _f, _f, _f, float(link.p_nom), _f, _f, _f, _f, _f]
             )
             psspy.vsc_dc_converter_data_3(
-                str(link.name),  # TODO
+                str(link.name),
                 2,
                 [int(link.bus1), 1, _i, _i, _i],
                 [400, config["build_network"]["scheduled_voltage"], _f, _f, _f, float(link.p_nom), _f, _f, _f, _f, _f]
@@ -412,7 +409,7 @@ if __name__ == "__main__":
         bus1 = buses.loc[link.bus1]
         add_link(link, bus0, bus1, snakemake.config)
 
-    # add countries as area; TODO (?): trade zones within countries -> manual work
+    # add countries as area;
     logger.info('Adding areas')
     for i, country in enumerate(all_bidding_zones, start=1):
         add_area(i, country)

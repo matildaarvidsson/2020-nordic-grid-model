@@ -1,6 +1,6 @@
 run:
   input: "2020"
-  name: "hl_hw" # use this to keep track of runs with different settings
+  name: "ll_hw" # use this to keep track of runs with different settings
 
 logging:
   level: INFO
@@ -115,7 +115,7 @@ build_network:
   scheduled_voltage: 1.0  # pu
   exclude_under_construction: False
   supress_psse_output: True
-  slack_buses: ["6585"]  # centralized nuclear plant
+  slack_buses: ["8256"]  # centralized nuclear plant
 #  slack_buses: ["7003"]  # biggest hydro plant in SE_1
 
 database:
