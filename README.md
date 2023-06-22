@@ -97,7 +97,7 @@ git clone https://github.com/matildaarvidsson/2020-nordic-grid-model.git
 Similar to PyPSA-Eur, create a conda environment, which automatically installs dependencies.
 
 ``` bash
-conda env create -f environment.yaml
+conda env create -f environment.yml
 conda activate dnv-nordics-model
 ```
 
